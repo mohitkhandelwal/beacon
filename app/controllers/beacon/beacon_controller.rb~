@@ -1,0 +1,19 @@
+module Beacon
+class BeaconController < ApplicationController
+  def beacon
+    puts "params1 #{params.inspect}"
+    @t_done=params[:t_done]
+    #puts "hello"
+    @t_page=params[:id]
+   # puts @t_done
+    @t_resp=params[:t_resp]
+    @r=params[:r]
+    @bw=params[:bw]
+    @lat=params[:lat]
+    File.open('beacon_result.txt', 'a') do |file|
+      file.puts "beacon results are: #{params.inspect}"
+
+    end
+  end
+end
+  end

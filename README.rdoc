@@ -1,0 +1,83 @@
+= Beacon
+
+SC-BEACON
+
+Measures the performance of Rails App from developer's end user's point of view
+
+Following modifications need to be done in rails app for sc-beacon gem to work:
+
+1)In gem file of your App add->
+gem 'sc-beacon','0.0.7'
+
+2)In app/assets/javascripts/application.js add->
+//= require beacon/boomerang.js
+
+3)In app/views/layouts/application.html.erb add at the bottom before </body> following javascript code->
+<script type="text/javascript">
+    BOOMR.init({
+        user_ip: " request.env['REMOTE_ADDR'] ",
+        beacon_url: "/beacon"  ,
+        BW: {
+            base_url: "/assets/"
+        }
+
+    });
+</script>
+
+4) In config/application.rb add->
+ config.autoload_paths += %W(#{config.root}/lib)
+
+5) If you want to send beacon parameters to statsd for some controllers and their action then use gem version 0.0.5 and add following in enviornment
+ in config/enviorment.rb before Initialize the rails application->
+example in sc-warehouse-ui :
+
+   require 'beacon'
+   require 'beacon/auto'
+   require 'beacon/statsd_handler'
+   statsd_host, statsd_port =  SupplyChain.statsd_connection_settings
+   Beacon::Auto.handler = Beacon::StatsdHandler.new(statsd_host, statsd_port,Tabs::BEACON_ACTIONS)
+
+/*  note: here above in tabs.rb of sc-warehouse-ui contains the list of controllers and actions for which beacon
+parameters will be send to statsd .I added following in tabs.rb
+   BEACON_ACTIONS =  [
+         {:controller => "controller_name", :action => "action_name"} , {:controller => "controller_name2", :action => "action_name2"}
+       ]
+
+   */
+
+
+  /*also if u want to store list of controllers and their actions in seperate file then keep that file let's say
+  route_file.rb  in lib folder
+
+   controller_action_file.rb will be like:
+      class ControllerActionFile
+       def self.sendroutes
+         routes= [{:controller => "controller_name1", :action => "action_name2"} , {:controller => "controller_name2", :action => "action_name2" }]
+      return routes
+       end
+      end
+
+
+    and in enviornment.rb before rails initialize the rails application put following:
+      require 'beacon'
+        require 'beacon/auto'
+        require 'beacon/statsd_handler'
+        statsd_host, statsd_port = "statsd_host_name", statsd_port_no
+        Beacon::Auto.handler = Beacon::StatsdHandler.new(statsd_host, statsd_port, ControllerActionFile.sendroutes)
+
+     */
+
+
+6)If you use version 0.0.7 then all of your app controller and action will send beacon parameters to statsd and add following to your
+ config/enviorment.rb before Initialize the rails application->
+
+
+   require 'beacon'
+   require 'beacon/auto'
+   require 'beacon/statsd_handler'
+   statsd_host, statsd_port =  SupplyChain.statsd_connection_settings
+   Beacon::Auto.handler = Beacon::StatsdHandler.new(statsd_host, statsd_port)
+
+
+7)In config/route.rb add following->
+   mount Beacon::Engine, at: "/beacon"
